@@ -7,9 +7,17 @@ function App() {
 
   useEffect(() => {
     fetch("https://assets.breatheco.de/apis/fake/todos/user/alesanchezr")
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
       .then((data) => {
         setTasks(data);
+      })
+      .catch((error) => {
+        console.error("There was an error fetching the tasks: ", error);
       });
   }, []);
 
@@ -20,39 +28,50 @@ function App() {
   const handleTaskFormSubmit = (event) => {
     event.preventDefault();
     if (newTask.trim() !== "") {
-      const newTasks = [...tasks, { label: newTask, done: false }];
-      setTasks(newTasks);
+      setTasks([...tasks, { label: newTask, done: false }]);
       setNewTask("");
-      updateTaskList(newTasks);
     }
   };
 
   const handleTaskDelete = (index) => {
-    const newTasks = tasks.filter((task, i) => i !== index);
-    setTasks(newTasks);
-    updateTaskList(newTasks);
-  };
-
-  const handleClearAllTasks = () => {
-    const newTasks = [];
-    setTasks(newTasks);
-    updateTaskList(newTasks);
-  };
-
-  const updateTaskList = (tasks) => {
+    setTasks(tasks.filter((task, i) => i !== index));
     fetch("https://assets.breatheco.de/apis/fake/todos/user/alesanchezr", {
       method: "PUT",
-      body: JSON.stringify(tasks),
+      body: JSON.stringify(tasks.filter((task, i) => i !== index)),
       headers: {
         "Content-Type": "application/json",
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
       .then((data) => {
-        console.log("Task list updated successfully:", data);
+        console.log("Task deleted successfully");
       })
       .catch((error) => {
-        console.error("Error updating task list:", error);
+        console.error("There was an error deleting the task: ", error);
+      });
+  };
+
+  const handleClearAll = () => {
+    setTasks([]);
+    fetch("https://assets.breatheco.de/apis/fake/todos/user/alesanchezr", {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("All tasks cleared successfully");
+      })
+      .catch((error) => {
+        console.error("There was an error clearing all tasks: ", error);
       });
   };
 
@@ -88,13 +107,12 @@ function App() {
       ) : (
         <p className="empty-task">No tasks, add a task</p>
       )}
-      {/* Counter for tasks left */}
-      <button className="clear" onClick={handleClearAllTasks}>
-        Clear All
-      </button>
-      <div className="counter">Tasks Left: {tasks.length}</div>
-    </div>
-  );
+    <button className="clear" onClick={handleClearAll}>
+Clear All
+</button>
+<div className="counter">Tasks Left: {tasks.filter((task) => !task.done).length}</div>
+</div>
+);
 }
 
 export default App;
