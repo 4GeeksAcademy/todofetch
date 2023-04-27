@@ -6,74 +6,126 @@ function App() {
   const [newTask, setNewTask] = useState("");
 
   useEffect(() => {
-    fetch("https://assets.breatheco.de/apis/fake/todos/user/alesanchezr")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          "https://assets.breatheco.de/apis/fake/todos/user/JonShelley"
+        );
+        const data = await response.json();
         setTasks(data);
-      })
-      .catch((error) => {
-        console.error("There was an error fetching the tasks: ", error);
-      });
+      } catch (error) {
+        console.log("Error fetching tasks: ", error);
+      }
+    };
+    fetchData();
   }, []);
 
   const handleTaskInputChange = (event) => {
     setNewTask(event.target.value);
   };
 
-  const handleTaskFormSubmit = (event) => {
+  const handleTaskFormSubmit = async (event) => {
     event.preventDefault();
     if (newTask.trim() !== "") {
-      setTasks([...tasks, { label: newTask, done: false }]);
-      setNewTask("");
+      const newTasks = [...tasks, { label: newTask, done: false }];
+      try {
+        const response = await fetch(
+          "https://assets.breatheco.de/apis/fake/todos/user/JonShelley",
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newTasks),
+          }
+        );
+        if (response.ok) {
+          setTasks(newTasks);
+          setNewTask("");
+        } else {
+          console.log("Error updating tasks");
+        }
+      } catch (error) {
+        console.log("Error updating tasks: ", error);
+      }
     }
   };
 
-  const handleTaskDelete = (index) => {
-    setTasks(tasks.filter((task, i) => i !== index));
-    fetch("https://assets.breatheco.de/apis/fake/todos/user/alesanchezr", {
-      method: "PUT",
-      body: JSON.stringify(tasks.filter((task, i) => i !== index)),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
+  const handleTaskDelete = async (index) => {
+    const newTasks = tasks.filter((task, i) => i !== index);
+    try {
+      const response = await fetch(
+        "https://assets.breatheco.de/apis/fake/todos/user/JonShelley",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newTasks),
         }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Task deleted successfully");
-      })
-      .catch((error) => {
-        console.error("There was an error deleting the task: ", error);
-      });
+      );
+      if (response.ok) {
+        setTasks(newTasks);
+      } else {
+        console.log("Error updating tasks");
+      }
+    } catch (error) {
+      console.log("Error updating tasks: ", error);
+    }
   };
 
-  const handleClearAll = () => {
-    setTasks([]);
-    fetch("https://assets.breatheco.de/apis/fake/todos/user/alesanchezr", {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
+  useEffect(() => {
+    const createAPI = async () => {
+      try {
+        const response = await fetch(
+          "https://assets.breatheco.de/apis/fake/todos/user/JonShelley",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify([]),
+          }
+        );
+        if (response.ok) {
+          console.log("API created successfully!");
+        } else {
+          console.log("Error creating API");
         }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("All tasks cleared successfully");
-      })
-      .catch((error) => {
-        console.error("There was an error clearing all tasks: ", error);
-      });
+      } catch (error) {
+        console.log("Error creating API: ", error);
+      }
+    };
+    createAPI();
+  }, []);
+
+  const handleClearAll = async () => {
+    try {
+      // delete user
+      const response = await fetch(
+        "https://assets.breatheco.de/apis/fake/todos/user/JonShelley",
+        {
+          method: "DELETE"
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Error deleting user");
+      }
+      
+      
+      const response2 = await fetch(
+        "https://assets.breatheco.de/apis/fake/todos/user/JonShelley",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify([])
+        }
+      );
+      if (!response2.ok) {
+        throw new Error("Error creating new user");
+      }
+      
+     
+      setTasks([]);
+    } catch (error) {
+      console.log("Error clearing all tasks: ", error);
+    }
   };
+  
 
   return (
     <div className="todo-list">
@@ -99,7 +151,7 @@ function App() {
                 className="delete-button"
                 onClick={() => handleTaskDelete(index)}
               >
-                x
+                X
               </button>
             </li>
           ))}
@@ -107,12 +159,14 @@ function App() {
       ) : (
         <p className="empty-task">No tasks, add a task</p>
       )}
-    <button className="clear" onClick={handleClearAll}>
-Clear All
-</button>
-<div className="counter">Tasks Left: {tasks.filter((task) => !task.done).length}</div>
-</div>
-);
+      <div className="counter">
+        Tasks Left: {tasks.filter(task => !task.done).length}
+      </div>
+      <button className="clear" onClick={() => { setTasks([]); handleClearAll([]) }}>Clear All</button>
+    </div>
+  );
+  
 }
-
+  
 export default App;
+  
