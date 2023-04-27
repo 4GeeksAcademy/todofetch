@@ -222,3 +222,6 @@ li {
   color: #d80000;
   text-shadow: 0px 0px 10px #d80000;
 }
+.hidden {
+  display: none;
+}
